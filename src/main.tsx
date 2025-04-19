@@ -5,6 +5,7 @@ import "./index.css";
 import App from "./App.tsx";
 import Layout from "./pages/layout.tsx";
 import OrdersPage from "./pages/orders.tsx";
+import TablesPage from "./pages/tables.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -12,6 +13,7 @@ createRoot(document.getElementById("root")!).render(
       <Route element={<Layout />}>
         <Route path="/" element={<App />} />
         <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/tables" element={<TablesPage />} />
       </Route>
     </Routes>
   </BrowserRouter>
