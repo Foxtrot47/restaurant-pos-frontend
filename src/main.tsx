@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router";
 import "@fontsource-variable/inter";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import "./index.css";
 import App from "./App.tsx";
 import Layout from "./pages/layout.tsx";
@@ -10,13 +12,15 @@ import Reports from "./pages/reports.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<App />} />
-        <Route path="/orders" element={<OrdersPage />} />
-        <Route path="/tables" element={<TablesPage />} />
-        <Route path="/reports" element={<Reports />} />
-      </Route>
-    </Routes>
+    <DndProvider backend={HTML5Backend}>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<App />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/tables" element={<TablesPage />} />
+          <Route path="/reports" element={<Reports />} />
+        </Route>
+      </Routes>
+    </DndProvider>
   </BrowserRouter>
 );
