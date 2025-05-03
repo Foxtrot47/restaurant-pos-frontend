@@ -32,7 +32,7 @@ export default function Layout() {
   const location = useLocation();
 
   const navItems = [
-    { path: "/dashboard", label: "Dashboard", icon: <BarChart4 size={20} /> },
+    { path: "/", label: "Dashboard", icon: <BarChart4 size={20} /> },
     { path: "/orders", label: "Orders", icon: <ClipboardList size={20} /> },
     { path: "/tables", label: "Tables", icon: <UtensilsCrossed size={20} /> },
     { path: "/menu", label: "Menu", icon: <ShoppingCart size={20} /> },
