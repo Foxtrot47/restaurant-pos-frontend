@@ -1,85 +1,161 @@
-import { Link, Outlet } from "react-router";
+// Layout.tsx
+import { useState } from "react";
+import { Link, Outlet, useLocation } from "react-router";
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Bolt, 
+  Bell, 
+  ClipboardList, 
+  UtensilsCrossed,
+  BarChart4,
+  Settings,
+  Users,
+  ShoppingCart
+} from "lucide-react";
+import { 
+  Avatar, 
+  AvatarFallback, 
+  AvatarImage 
+} from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export default function Layout() {
+  const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
+
+  const navItems = [
+    { path: "/dashboard", label: "Dashboard", icon: <BarChart4 size={20} /> },
+    { path: "/orders", label: "Orders", icon: <ClipboardList size={20} /> },
+    { path: "/tables", label: "Tables", icon: <UtensilsCrossed size={20} /> },
+    { path: "/menu", label: "Menu", icon: <ShoppingCart size={20} /> },
+    { path: "/reports", label: "Reports", icon: <Users size={20} /> },
+  ];
+
+  const isActive = (path: string) => {
+    return location.pathname.startsWith(path);
+  };
+
   return (
-    <div className="bg-white w-full rounded-t-3xl shadow-lg overflow-hidden" style={{ maxHeight: "100vh"}}>
-      <div className="flex justify-between items-center p-4 border-b max-h-16">
-        <div className="flex items-center">
-          <div className="bg-orange-500 rounded-full p-2 mr-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-          </div>
-          <span className="font-bold text-lg">EATS BITS</span>
-          <div className="ml-4 text-gray-400">
-          </div>
-        </div>
-
-        <div className="flex gap-4 items-center">
-          <button className="p-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-gray-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
-            </svg>
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="bg-orange-400 rounded-full w-10 h-10 flex items-center justify-center text-white font-semibold">
-              JD
+    <div className="min-h-screen bg-white overflow-hidden flex">
+      {/* Sidebar */}
+      <aside 
+        className={cn(
+          "bg-white border-r transition-all duration-300 flex flex-col",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        {/* Logo */}
+        <div className={cn(
+          "h-16 border-b flex items-center px-4",
+          collapsed ? "justify-center" : "justify-between"
+        )}>
+          {!collapsed && (
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 rounded-full p-2 flex items-center justify-center">
+                <Bolt className="h-5 w-5 text-white" />
+              </div>
+              <span className="font-bold text-lg">EATS BITS</span>
             </div>
-            <div>
-              <p className="font-semibold text-sm">John Doe</p>
-              <p className="text-xs text-gray-500">Admin</p>
+          )}
+          {collapsed && (
+            <div className="bg-blue-600 rounded-full p-2 flex items-center justify-center">
+              <Bolt className="h-5 w-5 text-white" />
+            </div>
+          )}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setCollapsed(!collapsed)}
+            className={collapsed ? "hidden" : ""}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 py-4">
+          <TooltipProvider delayDuration={0}>
+            <ul className="space-y-1">
+              {navItems.map((item) => (
+                <li key={item.path}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.path}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 mx-2 rounded-md transition-colors",
+                          isActive(item.path) 
+                            ? "bg-blue-50 text-blue-600" 
+                            : "text-gray-600 hover:bg-gray-100",
+                          collapsed && "justify-center px-2"
+                        )}
+                      >
+                        <span>{item.icon}</span>
+                        {!collapsed && <span>{item.label}</span>}
+                      </Link>
+                    </TooltipTrigger>
+                    {collapsed && (
+                      <TooltipContent side="right">
+                        {item.label}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </li>
+              ))}
+            </ul>
+          </TooltipProvider>
+        </nav>
+
+        {/* Collapse/Expand button at bottom */}
+        <div className="p-4 border-t">
+          <Button 
+            variant="outline" 
+            onClick={() => setCollapsed(!collapsed)} 
+            className={cn(
+              "w-full justify-center",
+              collapsed && "p-2"
+            )}
+          >
+            {collapsed ? <ChevronRight className="h-5 w-5" /> : "Collapse"}
+          </Button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="h-16 px-4 border-b flex items-center justify-end">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-0 right-0 h-2 w-2 bg-blue-600 rounded-full" />
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Avatar>
+                <AvatarImage src="/avatar.png" alt="John Doe" />
+                <AvatarFallback className="bg-blue-600 text-white">JD</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium">John Doe</p>
+                <p className="text-xs text-muted-foreground">Admin</p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      <div className="flex w-full">
-        <div className="w-64 border-r">
-          <ul className="py-4">
-            <li className="px-4 py-3 mx-2 mb-2 bg-orange-50 text-orange-500 rounded-lg">
-              <Link to={"/orders"} className="flex items-center gap-3">
-                <i className="fas fa-clipboard-list"></i>
-                <span>Orders</span>
-              </Link>
-            </li>
-            <li className="px-4 py-3 mx-2 mb-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-              <Link to={"/tables"} className="flex items-center gap-3">
-                <i className="fas fa-utensils"></i>
-                <span>Table</span>
-              </Link>
-            </li>
-            <li className="px-4 py-3 mx-2 mb-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-              <Link to={"/reports"} className="flex items-center gap-3">
-                <i className="fas fa-users"></i>
-                <span>Reports</span>
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        <Outlet />
+        {/* Main content area */}
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
