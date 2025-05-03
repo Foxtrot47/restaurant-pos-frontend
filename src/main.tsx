@@ -9,13 +9,14 @@ import Layout from "./pages/layout.tsx";
 import OrdersPage from "./pages/orders.tsx";
 import TablesPage from "./pages/tables.tsx";
 import Reports from "./pages/reports.tsx";
+import DashboardPage from "./pages/dashboard.tsx"
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <DndProvider backend={HTML5Backend}>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<App />} />
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/tables" element={<TablesPage />} />
           <Route path="/reports" element={<Reports />} />
