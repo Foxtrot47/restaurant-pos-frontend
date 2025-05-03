@@ -116,7 +116,7 @@ export default function TablesPage() {
             <TabsList>
               <TabsTrigger value="all">All Tables</TabsTrigger>
               <TabsTrigger value="main">Main Floor</TabsTrigger>
-              <TabsTrigger value="bar">Bar Area</TabsTrigger>
+              <TabsTrigger value="bar">2nd Floor</TabsTrigger>
             </TabsList>
           </div>
 
@@ -143,7 +143,7 @@ export default function TablesPage() {
                     >
                       <TableCell className="font-medium">{table.name}</TableCell>
                       <TableCell>{table.seats}</TableCell>
-                      <TableCell>{table.id <= 8 ? "Main Floor" : "Bar Area"}</TableCell>
+                      <TableCell>{table.id <= 8 ? "Main Floor" : "2nd Floor"}</TableCell>
                       <TableCell>{getStatusBadge(table.status)}</TableCell>
                       <TableCell>
                         {table.status === "occupied" ? "2 Guests" : 
