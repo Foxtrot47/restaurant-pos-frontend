@@ -10,6 +10,8 @@ import OrdersPage from "./pages/orders.tsx";
 import TablesPage from "./pages/tables.tsx";
 import Reports from "./pages/reports.tsx";
 import DashboardPage from "./pages/dashboard.tsx"
+import PastOrdersPage from "./pages/allorders.tsx";
+import MenuManagement from "./pages/menu.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -18,8 +20,10 @@ createRoot(document.getElementById("root")!).render(
         <Route element={<Layout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/all-orders" element={<PastOrdersPage />} />
           <Route path="/tables" element={<TablesPage />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/menu" element={<MenuManagement />} />
         </Route>
       </Routes>
     </DndProvider>

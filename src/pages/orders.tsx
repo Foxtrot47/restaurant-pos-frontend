@@ -1,214 +1,419 @@
 import { useState } from "react";
-import { Search, Plus, X } from "lucide-react";
-import OrderDetailSmallCard from "../components/OrderDetailSmallCard";
-import { dummyOrders, type Order, type OrderStatus } from "../data/orders";
-import { Input } from "@/components/ui/input";
+import { 
+  Card, 
+  CardContent
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon, Search, Eye } from "lucide-react";
 
-export default function OrdersPage() {
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+// Sample data
+const orders = [
+  { 
+    id: "ORD-001", 
+    date: new Date("2025-05-18T12:30:00"), 
+    table: "Table 3", 
+    type: "Dine In", 
+    status: "Served", 
+    amount: 45.99, 
+    staff: "Sarah" 
+  },
+  { 
+    id: "ORD-002", 
+    date: new Date("2025-05-18T13:15:00"), 
+    table: "Table 1", 
+    type: "Dine In", 
+    status: "Preparing", 
+    amount: 32.50, 
+    staff: "Mike" 
+  },
+  { 
+    id: "ORD-003", 
+    date: new Date("2025-05-18T12:45:00"), 
+    type: "Takeaway", 
+    status: "Paid", 
+    amount: 24.99, 
+    staff: "John" 
+  },
+  { 
+    id: "ORD-004", 
+    date: new Date("2025-05-18T11:20:00"), 
+    type: "HungerStation", 
+    status: "Paid", 
+    amount: 37.75, 
+    staff: "Sarah" 
+  },
+  { 
+    id: "ORD-005", 
+    date: new Date("2025-05-17T19:30:00"), 
+    table: "Table 5", 
+    type: "Dine In", 
+    status: "Paid", 
+    amount: 89.50, 
+    staff: "Mike" 
+  },
+];
 
-  // Properly type the ordersByStatus object
-  const ordersByStatus: Record<OrderStatus, Order[]> = {
-    Pending: [],
-    Preparing: [],
-    Completed: [],
-    Cancelled: [],
-  };
+// Sample order details
+const sampleOrderDetail = {
+  id: "ORD-002",
+  date: new Date("2025-05-18T13:15:00"),
+  table: "Table 1",
+  type: "Dine In",
+  status: "Preparing",
+  amount: 32.50,
+  staff: "Mike",
+  items: [
+    { name: "Caesar Salad", quantity: 1, price: 8.99, modifiers: [] },
+    { name: "Grilled Chicken", quantity: 1, price: 16.99, modifiers: ["No Spice"] },
+    { name: "Fresh Orange Juice", quantity: 1, price: 4.99, modifiers: ["Large Size +$1.50"] }
+  ],
+  specialInstructions: "Allergic to nuts",
+  subtotal: 30.97,
+  tax: 1.53,
+  total: 32.50,
+  paymentMethod: "Pending",
+  timestamps: {
+    placed: "2025-05-18 13:15:00",
+    prepared: null,
+    paid: null
+  }
+};
 
-  // Fill the ordersByStatus object
-  dummyOrders.forEach((order) => {
-    const status = order.status as OrderStatus;
-    if (ordersByStatus[status]) {
-      ordersByStatus[status].push(order);
-    }
+export default function OrderManagement() {
+  const [selectedBranch, setSelectedBranch] = useState("main");
+  const [orderView, setOrderView] = useState("running"); // "running" or "history"
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [date, setDate] = useState(new Date());
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showOrderDetail, setShowOrderDetail] = useState(false);
+
+  const filteredOrders = orders.filter(order => {
+    // Filter by search query
+    const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (order.table && order.table.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    // Filter by status
+    const matchesStatus = filterStatus === "all" || order.status === filterStatus;
+    
+    // Filter by type
+    const matchesType = filterType === "all" || order.type === filterType;
+    
+    // Filter by view (running or history)
+    const matchesView = (orderView === "running" && (order.status !== "Paid" && order.status !== "Cancelled")) ||
+                        (orderView === "history" && (order.status === "Paid" || order.status === "Cancelled"));
+    
+    return matchesSearch && matchesStatus && matchesType && matchesView;
   });
 
-  // Common statuses
-  const statuses = ["Pending", "Preparing", "Completed", "Cancelled"];
-
-  const openOrderDetails = (order: Order) => {
+  const viewOrderDetails = (order) => {
     setSelectedOrder(order);
-    setDetailsOpen(true);
-  };
-
-  const getStatusColor = (status: string) => {
-    const statusColors = {
-      "Completed": "bg-blue-50 text-blue-600 border-blue-200",
-      "Preparing": "bg-blue-100 text-blue-600 border-blue-200",
-      "Pending": "bg-gray-100 text-gray-700 border-gray-200",
-      "Cancelled": "bg-gray-200 text-gray-700 border-gray-300",
-    };
-    
-    return statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-600 border-gray-200";
+    setShowOrderDetail(true);
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Orders section */}
-      <div className="flex-1">
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Orders</h2>
-
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="mr-2 h-4 w-4" />
-              New Order
-            </Button>
-          </div>
-
-          <div className="mb-4 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input 
-              className="pl-10" 
-              placeholder="Search by name, order or etc" 
-            />
-          </div>
-        </div>
-
-        {/* Kanban board layout */}
-        <div className="flex gap-4 px-4 pb-4 overflow-x-auto">
-          {statuses.map((status) => (
-            <div
-              key={status}
-              className="flex-shrink-0"
-            >
-              <div className="bg-gray-50 rounded-lg p-3 h-full">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-sm">{status}</h3>
-                  <Badge variant="outline" className="bg-gray-100">
-                    {ordersByStatus[status as OrderStatus]?.length || 0}
-                  </Badge>
-                </div>
-
-                <ScrollArea className="h-[calc(100vh-12rem)]">
-                  <div className="space-y-3 pr-4">
-                    {ordersByStatus[status as OrderStatus].map((order) => (
-                      <div key={order.id} onClick={() => openOrderDetails(order)}>
-                        <OrderDetailSmallCard order={order} />
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <h1 className="text-4xl font-bold mb-4 sm:mb-0">Order Management</h1>
+        
+        <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+          <SelectTrigger className="w-[240px] text-xl h-14">
+            <SelectValue placeholder="Select Branch" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="main" className="text-xl">Main Branch</SelectItem>
+            <SelectItem value="downtown" className="text-xl">Downtown Branch</SelectItem>
+            <SelectItem value="mall" className="text-xl">Mall Branch</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Order details side panel */}
-      <Sheet open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <SheetContent className="w-[400px] sm:w-[540px] p-0 overflow-y-auto">
-          {selectedOrder && (
-            <>
-              <SheetHeader className="p-4 border-b sticky top-0 bg-white">
-                <div className="flex justify-between items-center">
-                  <SheetTitle>Order Details</SheetTitle>
-                  <SheetClose asChild>
-                  </SheetClose>
-                </div>
-              </SheetHeader>
+      {/* Order View Toggle */}
+      <div className="flex mb-6">
+        <Button 
+          onClick={() => setOrderView("running")} 
+          variant={orderView === "running" ? "default" : "outline"}
+          className="text-xl rounded-r-none px-8 py-6"
+        >
+          Running Orders
+        </Button>
+        <Button 
+          onClick={() => setOrderView("history")} 
+          variant={orderView === "history" ? "default" : "outline"}
+          className="text-xl rounded-l-none px-8 py-6"
+        >
+          Order History
+        </Button>
+      </div>
 
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h3 className="font-medium text-lg mb-1">
-                      Recipient: {selectedOrder.customerName}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {selectedOrder.dateTime}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      #{selectedOrder.id}
-                    </p>
-                  </div>
-                  <Badge className={getStatusColor(selectedOrder.status)}>
-                    {selectedOrder.status}
-                  </Badge>
-                </div>
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
+          <Input
+            type="text"
+            placeholder="Search by Order ID, Table..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-12 text-xl h-14"
+          />
+        </div>
+        
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="text-xl h-14">
+            <SelectValue placeholder="Filter by Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xl">All Statuses</SelectItem>
+            <SelectItem value="Pending" className="text-xl">Pending</SelectItem>
+            <SelectItem value="Preparing" className="text-xl">Preparing</SelectItem>
+            <SelectItem value="Ready" className="text-xl">Ready</SelectItem>
+            <SelectItem value="Served" className="text-xl">Served</SelectItem>
+            <SelectItem value="Paid" className="text-xl">Paid</SelectItem>
+            <SelectItem value="Cancelled" className="text-xl">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="text-xl h-14">
+            <SelectValue placeholder="Filter by Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xl">All Types</SelectItem>
+            <SelectItem value="Dine In" className="text-xl">Dine In</SelectItem>
+            <SelectItem value="Takeaway" className="text-xl">Takeaway</SelectItem>
+            <SelectItem value="HungerStation" className="text-xl">HungerStation</SelectItem>
+            <SelectItem value="Jahez" className="text-xl">Jahez</SelectItem>
+            <SelectItem value="Keeta" className="text-xl">Keeta</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-                <div className="space-y-4 mt-6">
-                  {selectedOrder.items?.map((item, index) => (
-                    <div key={index} className="flex gap-4">
-                      <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex items-center justify-center">
-                        <img
-                          src={`https://source.unsplash.com/100x100/?food,${item.name
-                            .toLowerCase()
-                            .replace(/\s/g, "")}`}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">{item.name}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          Category: {item.category}
-                        </p>
-                        {item.notes && (
-                          <p className="text-xs text-muted-foreground">
-                            Note: {item.notes}
-                          </p>
-                        )}
-                        <p className="font-medium mt-1">
-                          {item.quantity > 1 ? `${item.quantity}× ` : ""}$
-                          {item.price.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+      {/* Date Picker */}
+      <div className="mb-6">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="text-xl h-14">
+              <CalendarIcon className="mr-2 h-6 w-6" />
+              {format(date, "PPP")}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              initialFocus
+              className="text-xl"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
 
-                <div className="mt-8">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Items ({selectedOrder.items?.length || 0})</span>
-                    <span>${selectedOrder.subtotal?.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm mb-4">
-                    <span>Tax (10%)</span>
-                    <span>${selectedOrder.tax?.toFixed(2)}</span>
-                  </div>
-                  <Separator className="my-4" />
-                  <div className="flex justify-between font-medium text-lg">
-                    <span>Total</span>
-                    <span>
-                      $
-                      {selectedOrder.grandTotal?.toFixed(2) ||
-                        selectedOrder.total.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex gap-2">
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
-                    Print Bill
-                  </Button>
-                  <Button variant="outline" size="icon">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+      {/* Orders Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xl">Order ID</TableHead>
+                <TableHead className="text-xl">Date/Time</TableHead>
+                <TableHead className="text-xl">Table/Type</TableHead>
+                <TableHead className="text-xl">Status</TableHead>
+                <TableHead className="text-xl">Amount</TableHead>
+                <TableHead className="text-xl">Staff</TableHead>
+                <TableHead className="text-xl">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredOrders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell className="text-xl font-medium">{order.id}</TableCell>
+                  <TableCell className="text-xl">{format(order.date, "MMM d, h:mm a")}</TableCell>
+                  <TableCell className="text-xl">{order.table || order.type}</TableCell>
+                  <TableCell>
+                    <span 
+                      className={`text-xl px-3 py-1 rounded-full ${
+                        order.status === "Paid" ? "bg-green-100 text-green-800" : 
+                        order.status === "Cancelled" ? "bg-red-100 text-red-800" :
+                        order.status === "Preparing" ? "bg-yellow-100 text-yellow-800" :
+                        order.status === "Ready" ? "bg-blue-100 text-blue-800" :
+                        order.status === "Served" ? "bg-purple-100 text-purple-800" :
+                        "bg-gray-100 text-gray-800"
+                      }`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                      />
-                    </svg>
-                  </Button>
+                      {order.status}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-xl">${order.amount.toFixed(2)}</TableCell>
+                  <TableCell className="text-xl">{order.staff}</TableCell>
+                  <TableCell>
+                    <Button variant="outline" size="icon" onClick={() => viewOrderDetails(order)}>
+                      <Eye className="h-6 w-6" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Order Detail Dialog */}
+      <Dialog open={showOrderDetail} onOpenChange={setShowOrderDetail}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Order Details</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-lg text-gray-500">Order ID</p>
+                <p className="text-xl font-medium">{sampleOrderDetail.id}</p>
+              </div>
+              <div>
+                <p className="text-lg text-gray-500">Date/Time</p>
+                <p className="text-xl">{format(sampleOrderDetail.date, "MMM d, h:mm a")}</p>
+              </div>
+              <div>
+                <p className="text-lg text-gray-500">Table/Type</p>
+                <p className="text-xl">{sampleOrderDetail.table || sampleOrderDetail.type}</p>
+              </div>
+              <div>
+                <p className="text-lg text-gray-500">Status</p>
+                <span 
+                  className={`text-xl px-3 py-1 rounded-full ${
+                    sampleOrderDetail.status === "Paid" ? "bg-green-100 text-green-800" : 
+                    sampleOrderDetail.status === "Cancelled" ? "bg-red-100 text-red-800" :
+                    sampleOrderDetail.status === "Preparing" ? "bg-yellow-100 text-yellow-800" :
+                    "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {sampleOrderDetail.status}
+                </span>
+              </div>
+              <div>
+                <p className="text-lg text-gray-500">Staff</p>
+                <p className="text-xl">{sampleOrderDetail.staff}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Order Items</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-lg">Item</TableHead>
+                    <TableHead className="text-lg">Qty</TableHead>
+                    <TableHead className="text-lg">Price</TableHead>
+                    <TableHead className="text-lg">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sampleOrderDetail.items.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <div>
+                          <p className="text-lg font-medium">{item.name}</p>
+                          {item.modifiers.map((mod, i) => (
+                            <p key={i} className="text-gray-500 text-sm">{mod}</p>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-lg">{item.quantity}</TableCell>
+                      <TableCell className="text-lg">${item.price.toFixed(2)}</TableCell>
+                      <TableCell className="text-lg">${(item.quantity * item.price).toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {sampleOrderDetail.specialInstructions && (
+              <div>
+                <h3 className="text-xl font-semibold mb-2">Special Instructions</h3>
+                <p className="text-lg bg-gray-50 p-3 rounded">{sampleOrderDetail.specialInstructions}</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <p className="text-lg">Subtotal</p>
+                <p className="text-lg">${sampleOrderDetail.subtotal.toFixed(2)}</p>
+              </div>
+              <div className="flex justify-between">
+                <p className="text-lg">Tax</p>
+                <p className="text-lg">${sampleOrderDetail.tax.toFixed(2)}</p>
+              </div>
+              <div className="flex justify-between font-bold">
+                <p className="text-xl">Total</p>
+                <p className="text-xl">${sampleOrderDetail.total.toFixed(2)}</p>
+              </div>
+              <div className="flex justify-between">
+                <p className="text-lg">Payment Method</p>
+                <p className="text-lg">{sampleOrderDetail.paymentMethod}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold mb-2">Timestamps</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <p className="text-lg text-gray-500">Order Placed</p>
+                  <p className="text-lg">{sampleOrderDetail.timestamps.placed}</p>
+                </div>
+                <div>
+                  <p className="text-lg text-gray-500">Prepared</p>
+                  <p className="text-lg">{sampleOrderDetail.timestamps.prepared || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-lg text-gray-500">Paid</p>
+                  <p className="text-lg">{sampleOrderDetail.timestamps.paid || "-"}</p>
                 </div>
               </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+            </div>
+
+            <div className="flex justify-end">
+              <Button 
+                onClick={() => setShowOrderDetail(false)}
+                className="text-lg"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

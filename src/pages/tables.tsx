@@ -1,11 +1,8 @@
-// TablesPage.tsx
-import { useState, useEffect } from "react";
-import { tableData, type Table } from "../data/tables";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -13,398 +10,350 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table as UITable,
+  Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { 
-  Search, Filter, UtensilsCrossed, DollarSign, UserPlus, 
-  RefreshCw, Trash2, CalendarDays, Edit, MoreVertical 
-} from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { PlusCircle, Pencil, Trash2 } from "lucide-react";
 
-export default function TablesPage() {
-  const [tables, setTables] = useState(tableData);
-  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  
-  // Load table data from the server
-  useEffect(() => {
-    // Simulating API call
-    console.log("Tables loaded");
-  }, []);
+// Sample data
+const sections = [
+  { id: 1, name: "Indoor", description: "Main indoor seating area" },
+  { id: 2, name: "Patio", description: "Outdoor seating area" },
+  { id: 3, name: "Upstairs", description: "Second floor seating" },
+];
 
-  // Filter tables based on search query and status filter
-  const filteredTables = tables.filter(table => {
-    const matchesSearch = 
-      table.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      table.id.toString().includes(searchQuery);
-    
-    const matchesStatus = statusFilter === "all" || table.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+const tables = [
+  { id: 1, name: "Table 1", section: "Indoor", capacity: 4 },
+  { id: 2, name: "Table 2", section: "Indoor", capacity: 2 },
+  { id: 3, name: "Table 3", section: "Indoor", capacity: 6 },
+  { id: 4, name: "Table 4", section: "Patio", capacity: 4 },
+  { id: 5, name: "Table 5", section: "Patio", capacity: 8 },
+  { id: 6, name: "Table 6", section: "Upstairs", capacity: 4 },
+];
+
+export default function TableManagement() {
+  const [currentTab, setCurrentTab] = useState("sections");
+  const [selectedBranch, setSelectedBranch] = useState("main");
+  const [isAddSectionOpen, setIsAddSectionOpen] = useState(false);
+  const [isAddTableOpen, setIsAddTableOpen] = useState(false);
+  const [newSection, setNewSection] = useState({ name: "", description: "" });
+  const [newTable, setNewTable] = useState({
+    name: "",
+    section: "",
+    capacity: 2,
   });
 
-  // Group tables by floor
-  const mainFloorTables = filteredTables.filter(table => table.id <= 8);
-  const barAreaTables = filteredTables.filter(table => table.id > 8);
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "available":
-        return <Badge className="bg-blue-50 text-blue-600 border-blue-200">Available</Badge>;
-      case "reserved":
-        return <Badge className="bg-gray-100 text-gray-700 border-gray-200">Reserved</Badge>;
-      case "occupied":
-        return <Badge className="bg-gray-200 text-gray-700 border-gray-300">Occupied</Badge>;
-      case "blocked":
-        return <Badge className="bg-gray-300 text-gray-700 border-gray-400">Blocked</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Tables list section */}
-      <div className="w-2/3 border-r overflow-hidden flex flex-col">
-        <div className="p-4 border-b">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Tables Management</h2>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              Add New Table
-            </Button>
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <h1 className="text-4xl font-bold mb-4 sm:mb-0">Table Management</h1>
 
-          <div className="flex gap-2 mb-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-              <Input 
-                placeholder="Search tables..." 
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="reserved">Reserved</SelectItem>
-                <SelectItem value="occupied">Occupied</SelectItem>
-                <SelectItem value="blocked">Blocked</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <Tabs defaultValue="all" className="flex-1 flex flex-col">
-          <div className="px-4 pt-2">
-            <TabsList>
-              <TabsTrigger value="all">All Tables</TabsTrigger>
-              <TabsTrigger value="main">Main Floor</TabsTrigger>
-              <TabsTrigger value="bar">2nd Floor</TabsTrigger>
-            </TabsList>
-          </div>
-
-          <div className="flex-1 overflow-auto p-4">
-            <TabsContent value="all" className="m-0 h-full">
-              <UITable>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Table</TableHead>
-                    <TableHead>Seats</TableHead>
-                    <TableHead>Floor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Occupants</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTables.map((table) => (
-                    <TableRow 
-                      key={table.id}
-                      className={selectedTable?.id === table.id ? "bg-blue-50" : ""}
-                      onClick={() => setSelectedTable(table)}
-                    >
-                      <TableCell className="font-medium">{table.name}</TableCell>
-                      <TableCell>{table.seats}</TableCell>
-                      <TableCell>{table.id <= 8 ? "Main Floor" : "2nd Floor"}</TableCell>
-                      <TableCell>{getStatusBadge(table.status)}</TableCell>
-                      <TableCell>
-                        {table.status === "occupied" ? "2 Guests" : 
-                         table.status === "reserved" ? "Reservation" : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {table.status === "occupied" ? "37 min" : 
-                         table.status === "reserved" ? "5:30 PM" : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </UITable>
-            </TabsContent>
-
-            <TabsContent value="main" className="m-0 h-full">
-              <UITable>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Table</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Seats</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Occupants</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mainFloorTables.map((table) => (
-                    <TableRow 
-                      key={table.id}
-                      className={selectedTable?.id === table.id ? "bg-blue-50" : ""}
-                      onClick={() => setSelectedTable(table)}
-                    >
-                      <TableCell className="font-medium">{table.name}</TableCell>
-                      <TableCell className="capitalize">{table.type}</TableCell>
-                      <TableCell>{table.seats}</TableCell>
-                      <TableCell>{getStatusBadge(table.status)}</TableCell>
-                      <TableCell>
-                        {table.status === "occupied" ? "2 Guests" : 
-                         table.status === "reserved" ? "Reservation" : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {table.status === "occupied" ? "37 min" : 
-                         table.status === "reserved" ? "5:30 PM" : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </UITable>
-            </TabsContent>
-
-            <TabsContent value="bar" className="m-0 h-full">
-              <UITable>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Table</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Seats</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Occupants</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {barAreaTables.map((table) => (
-                    <TableRow 
-                      key={table.id}
-                      className={selectedTable?.id === table.id ? "bg-blue-50" : ""}
-                      onClick={() => setSelectedTable(table)}
-                    >
-                      <TableCell className="font-medium">{table.name}</TableCell>
-                      <TableCell className="capitalize">{table.type}</TableCell>
-                      <TableCell>{table.seats}</TableCell>
-                      <TableCell>{getStatusBadge(table.status)}</TableCell>
-                      <TableCell>
-                        {table.status === "occupied" ? "2 Guests" : 
-                         table.status === "reserved" ? "Reservation" : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {table.status === "occupied" ? "37 min" : 
-                         table.status === "reserved" ? "5:30 PM" : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </UITable>
-            </TabsContent>
-          </div>
-        </Tabs>
+        <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+          <SelectTrigger className="w-[240px] text-xl h-14">
+            <SelectValue placeholder="Select Branch" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="main" className="text-xl">
+              Main Branch
+            </SelectItem>
+            <SelectItem value="downtown" className="text-xl">
+              Downtown Branch
+            </SelectItem>
+            <SelectItem value="mall" className="text-xl">
+              Mall Branch
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Table details section */}
-      <div className="w-1/3 overflow-y-auto">
-        {selectedTable ? (
-          <div className="p-4">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl">
-                      Table {selectedTable.name}
-                    </CardTitle>
-                    <CardDescription>
-                      {selectedTable.id <= 8 ? "Main Floor" : "Bar Area"} • {selectedTable.seats} Seats • {selectedTable.type.charAt(0).toUpperCase() + selectedTable.type.slice(1)}
-                    </CardDescription>
+      <Tabs value={currentTab} onValueChange={setCurrentTab} className="mb-8">
+        <TabsList className="grid w-full grid-cols-2 h-16">
+          <TabsTrigger value="sections" className="text-xl">
+            Sections
+          </TabsTrigger>
+          <TabsTrigger value="tables" className="text-xl">
+            Tables
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Sections Tab */}
+        <TabsContent value="sections" className="mt-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold">Restaurant Sections</h2>
+            <Dialog open={isAddSectionOpen} onOpenChange={setIsAddSectionOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="text-xl">
+                  <PlusCircle className="mr-2 h-6 w-6" /> Add New Section
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl">
+                    Add New Section
+                  </DialogTitle>
+                  <DialogDescription className="text-lg">
+                    Create a new seating section for your restaurant.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-1 gap-2">
+                    <Label htmlFor="section-name" className="text-xl">
+                      Section Name
+                    </Label>
+                    <Input
+                      id="section-name"
+                      className="text-xl h-14"
+                      value={newSection.name}
+                      onChange={(e) =>
+                        setNewSection({ ...newSection, name: e.target.value })
+                      }
+                    />
                   </div>
-                  {getStatusBadge(selectedTable.status)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {selectedTable.status === "occupied" && (
-                  <>
-                    <div className="mb-6">
-                      <h3 className="font-medium mb-2">Current Occupants</h3>
-                      <p className="text-sm">
-                        <span className="font-medium">Ariel Hikmat</span> and 1 guest
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Seated: 5:30 PM (37 minutes ago)
-                      </p>
-                    </div>
-
-                    <div className="mb-6">
-                      <h3 className="font-medium mb-2">Order Details</h3>
-                      <div className="bg-gray-50 p-3 rounded-md">
-                        <div className="flex justify-between text-sm">
-                          <span>Order #ID945632</span>
-                          <span>$87.34</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mt-1">3 items</p>
-                        <p className="text-sm text-blue-600 mt-1">Food being prepared</p>
-                        <Button variant="outline" className="w-full mt-3 text-sm border-blue-200 text-blue-600">
-                          View Order Details
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {selectedTable.status === "reserved" && (
-                  <div className="mb-6">
-                    <h3 className="font-medium mb-2">Reservation</h3>
-                    <p className="text-sm">
-                      <span className="font-medium">John Davis</span> and 3 guests
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Reserved for: 5:30 PM - 7:00 PM
-                    </p>
-                  </div>
-                )}
-
-                <div className="mb-4">
-                  <h3 className="font-medium mb-3">Actions</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      disabled={selectedTable.status === "blocked"}
-                    >
-                      <UtensilsCrossed className="mr-2 h-4 w-4" /> New Order
-                    </Button>
-                    <Button 
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      disabled={selectedTable.status !== "occupied"}
-                    >
-                      <DollarSign className="mr-2 h-4 w-4" /> Pay Bill
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      disabled={!["occupied", "reserved"].includes(selectedTable.status)}
-                    >
-                      <UserPlus className="mr-2 h-4 w-4" /> Change Guests
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      disabled={selectedTable.status !== "occupied"}
-                    >
-                      <RefreshCw className="mr-2 h-4 w-4" /> Transfer
-                    </Button>
-                    <Button variant="outline">
-                      <CalendarDays className="mr-2 h-4 w-4" /> 
-                      {selectedTable.status === "reserved" ? "Edit Reservation" : "Reserve"}
-                    </Button>
-                    <Button variant="outline">
-                      <Edit className="mr-2 h-4 w-4" /> Edit Table
-                    </Button>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Label htmlFor="section-description" className="text-xl">
+                      Description (Optional)
+                    </Label>
+                    <Input
+                      id="section-description"
+                      className="text-xl h-14"
+                      value={newSection.description}
+                      onChange={(e) =>
+                        setNewSection({
+                          ...newSection,
+                          description: e.target.value,
+                        })
+                      }
+                    />
                   </div>
                 </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddSectionOpen(false)}
+                    className="text-lg h-14"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      console.log("Adding section:", newSection);
+                      setIsAddSectionOpen(false);
+                      setNewSection({ name: "", description: "" });
+                    }}
+                    className="text-lg h-14"
+                  >
+                    Add Section
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
 
-                {(selectedTable.status === "occupied" || selectedTable.status === "reserved") && (
-                  <div>
-                    <h3 className="font-medium mb-2">Reservation History</h3>
-                    <div className="divide-y border rounded-md">
-                      <div className="p-3">
-                        <div className="flex justify-between">
-                          <span className="font-medium">John Davis</span>
-                          <span className="text-gray-500">Today</span>
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xl w-1/3">
+                      Section Name
+                    </TableHead>
+                    <TableHead className="text-xl w-1/2">Description</TableHead>
+                    <TableHead className="text-xl w-1/6">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sections.map((section) => (
+                    <TableRow key={section.id}>
+                      <TableCell className="text-xl font-medium">
+                        {section.name}
+                      </TableCell>
+                      <TableCell className="text-xl">
+                        {section.description}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="icon">
+                            <Pencil className="h-6 w-6" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-6 w-6" />
+                          </Button>
                         </div>
-                        <div className="flex justify-between text-gray-600 mt-1 text-sm">
-                          <span>12:30 PM - 2:00 PM</span>
-                          <span>4 guests</span>
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        <div className="flex justify-between">
-                          <span className="font-medium">Sarah Miller</span>
-                          <span className="text-gray-500">Today</span>
-                        </div>
-                        <div className="flex justify-between text-gray-600 mt-1 text-sm">
-                          <span>2:30 PM - 4:00 PM</span>
-                          <span>2 guests</span>
-                        </div>
-                      </div>
-                      {selectedTable.status === "occupied" && (
-                        <div className="p-3 bg-blue-50">
-                          <div className="flex justify-between">
-                            <span className="font-medium">Ariel Hikmat</span>
-                            <span className="text-gray-500">Today</span>
-                          </div>
-                          <div className="flex justify-between text-gray-600 mt-1 text-sm">
-                            <span>5:30 PM - 7:00 PM</span>
-                            <span>2 guests</span>
-                          </div>
-                          <div className="mt-1 text-blue-600 text-xs flex items-center">
-                            <div className="w-2 h-2 bg-blue-600 rounded-full mr-1"></div>
-                            Current customer
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tables Tab */}
+        <TabsContent value="tables" className="mt-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold">Restaurant Tables</h2>
+            <Dialog open={isAddTableOpen} onOpenChange={setIsAddTableOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="text-xl">
+                  <PlusCircle className="mr-2 h-6 w-6" /> Add New Table
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl">Add New Table</DialogTitle>
+                  <DialogDescription className="text-lg">
+                    Create a new table and assign it to a section.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-1 gap-2">
+                    <Label htmlFor="table-name" className="text-xl">
+                      Table Name/Number
+                    </Label>
+                    <Input
+                      id="table-name"
+                      className="text-xl h-14"
+                      value={newTable.name}
+                      onChange={(e) =>
+                        setNewTable({ ...newTable, name: e.target.value })
+                      }
+                    />
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Label htmlFor="table-section" className="text-xl">
+                      Section
+                    </Label>
+                    <Select
+                      value={newTable.section}
+                      onValueChange={(value) =>
+                        setNewTable({ ...newTable, section: value })
+                      }
+                    >
+                      <SelectTrigger
+                        id="table-section"
+                        className="text-xl h-14"
+                      >
+                        <SelectValue placeholder="Select Section" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sections.map((section) => (
+                          <SelectItem
+                            key={section.id}
+                            value={section.name}
+                            className="text-xl"
+                          >
+                            {section.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Label htmlFor="table-capacity" className="text-xl">
+                      Capacity (number of seats)
+                    </Label>
+                    <Input
+                      id="table-capacity"
+                      type="number"
+                      min="1"
+                      className="text-xl h-14"
+                      value={newTable.capacity}
+                      onChange={(e) =>
+                        setNewTable({
+                          ...newTable,
+                          capacity: parseInt(e.target.value) || 1,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddTableOpen(false)}
+                    className="text-lg h-14"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      console.log("Adding table:", newTable);
+                      setIsAddTableOpen(false);
+                      setNewTable({ name: "", section: "", capacity: 2 });
+                    }}
+                    className="text-lg h-14"
+                  >
+                    Add Table
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
-        ) : (
-          <div className="h-full flex items-center justify-center p-6 text-center">
-            <div>
-              <h3 className="font-medium text-lg mb-2">No Table Selected</h3>
-              <p className="text-gray-500 mb-4">Select a table from the list to view details</p>
-            </div>
-          </div>
-        )}
-      </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xl w-1/3">
+                      Table Name/Number
+                    </TableHead>
+                    <TableHead className="text-xl w-1/3">Section</TableHead>
+                    <TableHead className="text-xl w-1/6">Capacity</TableHead>
+                    <TableHead className="text-xl w-1/6">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tables.map((table) => (
+                    <TableRow key={table.id}>
+                      <TableCell className="text-xl font-medium">
+                        {table.name}
+                      </TableCell>
+                      <TableCell className="text-xl">{table.section}</TableCell>
+                      <TableCell className="text-xl">
+                        {table.capacity} seats
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="icon">
+                            <Pencil className="h-6 w-6" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-6 w-6" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
